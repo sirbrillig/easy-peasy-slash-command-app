@@ -96,25 +96,29 @@ function isUserAtLunch() {
     return false;
 }
 
-function setLunchStatus() {
-    // TODO: use Slack API to set status to :lunch:
+function setLunchStatus(bot) {
+    const statusPayload = {
+        "status_text": "lunch time!",
+        "status_emoji": ":lunch:"
+    };
+    bot.api.users.profile.set(statusPayload);
 }
 
-controller.hears('slash_command', function (slashCommand, message) {
+controller.hears('slash_command', function (bot, message) {
     console.log( 'slash_command heard');
 
     switch (message.command) {
         case "/lunch":
             if (message.token !== process.env.VERIFICATION_TOKEN) return;
             if (isUserAtLunch()) {
-                slashCommand.replyPrivate(message, "Marking you as back from lunch.");
+                bot.replyPrivate(message, "Marking you as back from lunch.");
                 clearStatus();
                 return;
             }
-            setLunchStatus();
+            setLunchStatus(bot);
             break;
         default:
-            slashCommand.replyPrivate(message, "I'm afraid I don't know how to " + message.command + " yet.");
+            bot.replyPrivate(message, "I'm afraid I don't know how to " + message.command + " yet.");
 
     }
 
