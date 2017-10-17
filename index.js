@@ -75,7 +75,7 @@ controller.setupWebserver(process.env.PORT, function (err, webserver) {
     }
     console.log( 'listening...' );
     webserver.use( ( req, res, next ) => {
-        console.log( 'got http request', JSON.stringify( req.body, null, 2 ) );
+        console.log( 'got http request', req.method, req.url, JSON.stringify( req.body, null, 2 ) );
         next();
     } );
     controller.createWebhookEndpoints(webserver);
