@@ -70,15 +70,16 @@ var controller = Botkit.slackbot(config).configureSlackApp(
 
 controller.setupWebserver(process.env.PORT, function (err, webserver) {
     console.log( 'listening...' );
-    controller.createWebhookEndpoints(controller.webserver);
+    webserver.use( ( req, res, next ) => {
+        console.log( 'got http request', JSON.stringify( req.body, null, 2 ) );
+        next();
+    } );
+    controller.createWebhookEndpoints(webserver);
 
     controller.createOauthEndpoints(controller.webserver, function (err, req, res) {
-        console.log( 'heard something' );
         if (err) {
-            console.log( '500' );
             res.status(500).send('ERROR: ' + err);
         } else {
-            console.log( '200' );
             res.send('Success!');
         }
     });
@@ -111,10 +112,11 @@ controller.hears('slash_command', function (bot, message) {
         case "/lunch":
             if (message.token !== process.env.VERIFICATION_TOKEN) return;
             if (isUserAtLunch()) {
-                bot.replyPrivate(message, "Marking you as back from lunch.");
+                bot.replyPrivate(message, "Welcome back from lunch!");
                 clearStatus();
                 return;
             }
+            bot.replyPrivate(message, "Enjoy lunch!");
             setLunchStatus(bot);
             break;
         default:
