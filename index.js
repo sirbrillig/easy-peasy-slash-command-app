@@ -69,6 +69,10 @@ var controller = Botkit.slackbot(config).configureSlackApp(
 );
 
 controller.setupWebserver(process.env.PORT, function (err, webserver) {
+    if (err) {
+        console.log('error!');
+        process.exit(1);
+    }
     console.log( 'listening...' );
     webserver.use( ( req, res, next ) => {
         console.log( 'got http request', JSON.stringify( req.body, null, 2 ) );
