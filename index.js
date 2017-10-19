@@ -76,6 +76,7 @@ controller.setupWebserver(process.env.PORT, function (err, webserver) {
     console.log( 'listening...' );
     webserver.use( ( req, res, next ) => {
         console.log( 'got http request', req.method, req.url, JSON.stringify( req.body, null, 2 ) );
+        console.log( 'headers', req.headers );
         next();
     } );
     controller.createWebhookEndpoints(webserver);
@@ -96,12 +97,21 @@ controller.setupWebserver(process.env.PORT, function (err, webserver) {
 
 // TODO: credit icon somewhere with: <div>Icons made by <a href="http://www.freepik.com" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></div>
 
-function isUserAtLunch() {
+function isUserAtLunch(bot) {
     // TODO: figure this out
+    // https://api.slack.com/methods/users.profile.get
+    const requestData = {
+        token: '', // TODO: is it in bot?
+    };
+    const callback = (err, response) =>  {
+        console.log( 'got profile response', response );
+    };
+    bot.api.users.profile.get(requestData, callback);
     return false;
 }
 
 function setLunchStatus(bot) {
+    // TODO: clearly something else needs to happen here because it does not work
     const statusPayload = {
         "status_text": "lunch time!",
         "status_emoji": ":lunch:"
@@ -109,13 +119,13 @@ function setLunchStatus(bot) {
     bot.api.users.profile.set(statusPayload);
 }
 
-controller.hears('slash_command', function (bot, message) {
+controller.on('slash_command', function (bot, message) {
     console.log( 'slash_command heard');
 
     switch (message.command) {
         case "/lunch":
             if (message.token !== process.env.VERIFICATION_TOKEN) return;
-            if (isUserAtLunch()) {
+            if (isUserAtLunch(bot)) {
                 bot.replyPrivate(message, "Welcome back from lunch!");
                 clearStatus();
                 return;
