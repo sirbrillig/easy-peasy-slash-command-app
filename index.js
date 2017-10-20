@@ -43,8 +43,8 @@
 /* Uses the slack button feature to offer a real time bot to multiple teams */
 var Botkit = require('botkit');
 
-if (!process.env.CLIENT_ID || !process.env.CLIENT_SECRET || !process.env.PORT || !process.env.VERIFICATION_TOKEN) {
-    console.log('Error: Specify CLIENT_ID, CLIENT_SECRET, VERIFICATION_TOKEN and PORT in environment');
+if (!process.env.CLIENT_ID || !process.env.CLIENT_SECRET || !process.env.PORT || !process.env.VERIFICATION_TOKEN || !process.env.OAUTH_TOKEN) {
+    console.log('Error: Specify OAUTH_TOKEN, CLIENT_ID, CLIENT_SECRET, VERIFICATION_TOKEN and PORT in environment');
     process.exit(1);
 }
 
@@ -98,25 +98,41 @@ controller.setupWebserver(process.env.PORT, function (err, webserver) {
 // TODO: credit icon somewhere with: <div>Icons made by <a href="http://www.freepik.com" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></div>
 
 function isUserAtLunch(bot) {
-    // TODO: figure this out
-    // https://api.slack.com/methods/users.profile.get
-    const requestData = {
-        token: '', // TODO: is it in bot?
-    };
-    const callback = (err, response) =>  {
-        console.log( 'got profile response', response );
-    };
-    bot.api.users.profile.get(requestData, callback);
-    return false;
+    return new Promise((resolve, reject) => {
+        const requestData = {
+            token: process.env.OAUTH_TOKEN,
+        };
+        const callback = (err, response) =>  {
+            console.log( 'got profile response', response );
+            const isAtLunch = (response.profile.status_emoji === ':lunch:');
+            resolve( isAtLunch );
+        };
+        bot.api.users.profile.get(requestData, callback);
+    });
 }
 
 function setLunchStatus(bot) {
-    // TODO: clearly something else needs to happen here because it does not work
     const statusPayload = {
-        "status_text": "lunch time!",
-        "status_emoji": ":lunch:"
+        token: process.env.OAUTH_TOKEN,
+        'status_text': 'lunch time!',
+        'status_emoji': ':lunch:',
     };
-    bot.api.users.profile.set(statusPayload);
+    bot.api.users.profile.set(statusPayload, callback);
+    const callback = (err, response) =>  {
+        console.log( 'got set profile response', response );
+    };
+}
+
+function clearStatus() {
+    const statusPayload = {
+        token: process.env.OAUTH_TOKEN,
+        'status_text': '',
+        'status_emoji': '',
+    };
+    bot.api.users.profile.set(statusPayload, callback);
+    const callback = (err, response) =>  {
+        console.log( 'got clear profile response', response );
+    };
 }
 
 controller.on('slash_command', function (bot, message) {
@@ -125,13 +141,16 @@ controller.on('slash_command', function (bot, message) {
     switch (message.command) {
         case "/lunch":
             if (message.token !== process.env.VERIFICATION_TOKEN) return;
-            if (isUserAtLunch(bot)) {
-                bot.replyPrivate(message, "Welcome back from lunch!");
-                clearStatus();
-                return;
-            }
-            bot.replyPrivate(message, "Enjoy lunch!");
-            setLunchStatus(bot);
+            isUserAtLunch(bot)
+            .then( ( isAtLunch ) => {
+                if (isAtLunch) {
+                    bot.replyPrivate(message, "Welcome back from lunch!");
+                    clearStatus(bot);
+                    return;
+                }
+                bot.replyPrivate(message, "Enjoy lunch!");
+                setLunchStatus(bot);
+            } )
             break;
         default:
             bot.replyPrivate(message, "I'm afraid I don't know how to " + message.command + " yet.");
