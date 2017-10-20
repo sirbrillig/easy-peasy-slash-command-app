@@ -28,5 +28,8 @@
     "botkit": "0.6.4",
     "botkit-storage-mongo": "^1.0.7",
     "mongodb": "^1.4.39"
+  },
+  "devDependencies": {
+    "standard": "^10.0.3"
   }
 }
