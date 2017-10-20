@@ -70,15 +70,17 @@ function isUserAtLunch (bot) {
   })
 }
 
-function setLunchStatus (bot) {
+function setStatus (bot, text, emoji) {
   const statusPayload = {
     token: process.env.OAUTH_TOKEN,
-    'status_text': 'lunch time!',
-    'status_emoji': ':lunch:'
+    profile: JSON.stringify({
+      'status_text': text,
+      'status_emoji': emoji
+    }
   }
   const callback = (err, response) => {
     if (err) {
-      console.log('error setting status:', err)
+      console.log(`error setting status to "${emoji}":`, err)
       return
     }
     console.log('got set profile response', response)
@@ -86,20 +88,12 @@ function setLunchStatus (bot) {
   bot.api.users.profile.set(statusPayload, callback)
 }
 
+function setLunchStatus (bot) {
+  setStatus(bot, 'lunch time!', ':lunch:')
+}
+
 function clearStatus (bot) {
-  const statusPayload = {
-    token: process.env.OAUTH_TOKEN,
-    'status_text': '',
-    'status_emoji': ''
-  }
-  const callback = (err, response) => {
-    if (err) {
-      console.log('error clearing status:', err)
-      return
-    }
-    console.log('got clear profile response', response)
-  }
-  bot.api.users.profile.set(statusPayload, callback)
+  setStatus(bot, '', '')
 }
 
 controller.on('slash_command', function (bot, message) {
