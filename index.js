@@ -27,15 +27,9 @@ var controller = Botkit.slackbot(config).configureSlackApp(
 
 controller.setupWebserver(process.env.PORT, function (err, webserver) {
   if (err) {
-    console.log('error!')
+    console.log('error creating webserver!')
     process.exit(1)
   }
-  console.log('listening...')
-  webserver.use((req, res, next) => {
-    console.log('got http request', req.method, req.url, JSON.stringify(req.body, null, 2))
-    console.log('headers', req.headers)
-    next()
-  })
   controller.createWebhookEndpoints(webserver)
 
   controller.createOauthEndpoints(controller.webserver, function (err, req, res) {
@@ -59,7 +53,6 @@ function isUserAtLunch (bot) {
       token: process.env.OAUTH_TOKEN
     }
     const callback = (err, response) => {
-      console.log('got profile response', response)
       if (err) {
         return reject(err)
       }
@@ -76,14 +69,13 @@ function setStatus (bot, text, emoji) {
     profile: JSON.stringify({
       'status_text': text,
       'status_emoji': emoji
-    }
+    })
   }
   const callback = (err, response) => {
     if (err) {
       console.log(`error setting status to "${emoji}":`, err)
       return
     }
-    console.log('got set profile response', response)
   }
   bot.api.users.profile.set(statusPayload, callback)
 }
@@ -97,8 +89,6 @@ function clearStatus (bot) {
 }
 
 controller.on('slash_command', function (bot, message) {
-  console.log('slash_command heard')
-
   switch (message.command) {
     case '/lunch':
       if (message.token !== process.env.VERIFICATION_TOKEN) return
