@@ -74,7 +74,6 @@ function setStatus (bot, text, emoji) {
   const callback = (err, response) => {
     if (err) {
       console.log(`error setting status to "${emoji}":`, err)
-      return
     }
   }
   bot.api.users.profile.set(statusPayload, callback)
